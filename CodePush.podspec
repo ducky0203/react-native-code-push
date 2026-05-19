@@ -10,10 +10,12 @@ Pod::Spec.new do |s|
   s.license        = package['license']
   s.homepage       = package['homepage']
   s.source         = { :git => 'https://github.com/ducky0203/react-native-code-push.git', :tag => "v#{s.version}"}
-  # Match the React Native 0.85.3 baseline so this pod doesn't force the host
-  # app's Podfile to bump its deployment target.
-  s.ios.deployment_target = '15.1'
-  s.tvos.deployment_target = '15.1'
+  # Effective minimum is driven by SSZipArchive 2.5.0+, which requires
+  # iOS / tvOS 15.5 (zlib 1.2.12, see CVE-2018-25032). Host apps consuming
+  # this pod MUST therefore declare `platform :ios, '15.5'` (or higher) in
+  # their Podfile. We can't bump SSZipArchive down without taking on the CVE.
+  s.ios.deployment_target = '15.5'
+  s.tvos.deployment_target = '15.5'
   s.preserve_paths = '*.js'
   s.library        = 'z'
   s.source_files = 'ios/CodePush/*.{h,m}'

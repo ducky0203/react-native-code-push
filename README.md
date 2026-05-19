@@ -66,7 +66,8 @@ store(s).*
 
 ## Supported React Native versions
 
-- iOS 15.1+
+- iOS **15.5+** (required by SSZipArchive 2.5+, which bundles zlib 1.2.12 to
+  address [CVE-2018-25032](https://nvd.nist.gov/vuln/detail/CVE-2018-25032))
 - Android API 24+ (TLS 1.2 compatible devices)
 
 | React Native version | Supporting plugin version                       |
@@ -76,6 +77,21 @@ store(s).*
 > This `1.0.x` line tracks React Native **0.85.3** specifically. Older RN
 > versions (≤ 0.84) are **not** supported — use the upstream
 > `react-native-code-push` or an earlier fork for those.
+
+> **Heads-up — host app `Podfile`:** React Native 0.85.3 templates default
+> the iOS deployment target to `15.1`, but this plugin requires `15.5`. You
+> **must** raise the floor in your host app's `ios/Podfile`:
+>
+> ```ruby
+> platform :ios, '15.5'
+> ```
+>
+> Otherwise CocoaPods will fail with:
+> ```
+> [!] CocoaPods could not find compatible versions for pod "SSZipArchive":
+>     Specs satisfying the dependency were found, but they required a
+>     higher minimum deployment target.
+> ```
 
 ### Supported components
 

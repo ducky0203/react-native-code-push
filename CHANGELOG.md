@@ -39,19 +39,16 @@ mode by default).
 
 ### iOS
 
-- Lowered `ios.deployment_target` from `15.5` to **`15.1`** in `CodePush.podspec`
-  to match the React Native 0.85.3 baseline. The previous `15.5` floor caused
-  CocoaPods to fail resolution in host apps that legitimately ship with
-  `platform :ios, '15.1'`:
-  ```
-  [!] CocoaPods could not find compatible versions for pod "CodePush":
-        Specs satisfying the dependency were found, but they required a
-        higher minimum deployment target.
-  ```
-  The `tvos.deployment_target` was lowered to `15.1` as well, and the
-  `IPHONEOS_DEPLOYMENT_TARGET` build settings in
-  `ios/CodePush.xcodeproj/project.pbxproj` were aligned to `15.1` (some
-  entries were still pinned to a legacy `9.0`).
+- Effective minimum deployment target is **iOS / tvOS 15.5** (not the RN 0.85
+  baseline of 15.1). This is dictated by `SSZipArchive ~> 2.5.5`, which
+  bumped its floor to 15.5 starting at 2.5.0 to ship a zlib build that
+  resolves [CVE-2018-25032](https://nvd.nist.gov/vuln/detail/CVE-2018-25032).
+  Downgrading SSZipArchive is not an option without re-introducing the CVE.
+- `CodePush.podspec` declares `s.ios.deployment_target = '15.5'` and
+  `s.tvos.deployment_target = '15.5'` to match. Host apps must set
+  `platform :ios, '15.5'` (or higher) in their `ios/Podfile` — see README.
+- `IPHONEOS_DEPLOYMENT_TARGET` entries in `ios/CodePush.xcodeproj/project.pbxproj`
+  were aligned to `15.5` (some entries were still pinned to a legacy `9.0`).
 - Source code already calls `RCTTriggerReloadCommandListeners`, so reload
   works in both bridge and bridgeless mode. The KVC fallback on `super.bridge`
   is a no-op under bridgeless because of Objective-C nil-messaging.
