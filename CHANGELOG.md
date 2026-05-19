@@ -66,9 +66,17 @@ mode by default).
 - Updated keywords / description in `package.json` and added explicit
   `peerDependencies` (`react >=19.2.3`, `react-native >=0.85.3`).
 - **Dependency cleanup** to silence install-time deprecation warnings:
-  - Removed `code-push@4.2.3` (App Center sunset; never required at runtime
-    by this package — it was a leftover dev-CLI dep). This also kills the
-    transitive `superagent@8`, `superagent@5`, `formidable@1.2.6` warnings.
+  - **Vendored** `acquisition-sdk.js` + `code-push-error.js` from
+    `code-push@4.2.3` into `vendor/code-push/` (MIT, attribution kept in
+    `vendor/code-push/LICENSE.txt`) and dropped the `code-push` runtime
+    dependency. Rationale: the only thing `CodePush.js` actually imported
+    from `code-push` was the small acquisition SDK (≈210 lines, no
+    transitive deps); everything else in `code-push` is its CLI / management
+    SDK code path which this React Native plugin never reaches, but those
+    paths drag in `superagent@5/8`, `formidable@1.2.6`, and
+    `appcenter-file-upload-client` — all flagged as deprecated by yarn /
+    npm at install time. Vendoring removes the warning AND removes the
+    last tie to an unmaintained App Center package.
   - Bumped `glob` from `^7.1.7` → `^13.0.6` (uses the back-compat
     `glob.sync` alias added in glob 9.3+; requires Node ≥20, already the
     minimum for RN 0.85.3).

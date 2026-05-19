@@ -1,0 +1,37 @@
+The files in this directory are vendored from the `code-push` npm package
+(https://github.com/microsoft/code-push), specifically:
+
+  - script/acquisition-sdk.js (CommonJS-compiled, taken from code-push@4.2.3)
+  - script/code-push-error.js (CommonJS-compiled, taken from code-push@4.2.3)
+
+They are inlined here so that `@ducky0203/react-native-code-push` no longer
+needs `code-push` as a runtime dependency — the `code-push` package drags in
+deprecated transitive deps (superagent v5/v8, formidable v1, ...) that only
+matter for its CLI / management SDK code paths, which this React Native
+plugin never imports.
+
+Original copyright notice from code-push:
+
+  Copyright (c) Microsoft Corporation.
+
+  All rights reserved.
+
+  MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
