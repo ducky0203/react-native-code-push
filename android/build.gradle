@@ -14,10 +14,11 @@ if (IS_NEW_ARCHITECTURE_ENABLED) {
     apply plugin: "com.facebook.react"
 }
 
-def DEFAULT_COMPILE_SDK_VERSION = 26
-def DEFAULT_BUILD_TOOLS_VERSION = "26.0.3"
-def DEFAULT_TARGET_SDK_VERSION = 26
-def DEFAULT_MIN_SDK_VERSION = 16
+// Defaults aligned with React Native 0.85.x requirements.
+def DEFAULT_COMPILE_SDK_VERSION = 35
+def DEFAULT_BUILD_TOOLS_VERSION = "35.0.0"
+def DEFAULT_TARGET_SDK_VERSION = 35
+def DEFAULT_MIN_SDK_VERSION = 24
 
 android {
     namespace "com.microsoft.codepush.react"
@@ -31,18 +32,28 @@ android {
         versionCode 1
         versionName "1.0"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", IS_NEW_ARCHITECTURE_ENABLED.toString()
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+
+    // AGP 8.x no longer enables BuildConfig generation by default.
+    buildFeatures {
+        buildConfig = true
+    }
+
+    // React Native 0.85 requires Java 17.
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     lintOptions {
         abortOnError false
     }
-
-    defaultConfig {
-        consumerProguardFiles 'proguard-rules.pro'
-    }
 }
 
 dependencies {
-    implementation "com.facebook.react:react-native:+"
+    // The `react-android` artifact contains the React Native Android sources
+    // and is the recommended dependency from React Native 0.71+.
+    implementation "com.facebook.react:react-android"
     implementation 'com.nimbusds:nimbus-jose-jwt:9.37.3'
 }

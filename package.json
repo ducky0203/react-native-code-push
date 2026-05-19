@@ -1,27 +1,28 @@
 {
-  "name": "@outblock/react-native-code-push",
-  "version": "1.2.3",
-  "description": "React Native plugin for the CodePush service (Fixed auto-linking for @outblock)",
+  "name": "@ducky0203/react-native-code-push",
+  "version": "1.0.0",
+  "description": "React Native plugin for the CodePush service (targets React Native 0.85.3)",
   "main": "CodePush.js",
   "typings": "typings/react-native-code-push.d.ts",
-  "homepage": "https://revopush.org/",
+  "homepage": "https://github.com/ducky0203/react-native-code-push",
   "keywords": [
     "react-native",
-    "code",
-    "revopush",
+    "code-push",
+    "codepush",
     "ota",
-    "push"
+    "push",
+    "rn-085"
   ],
-  "author": "Revopush",
+  "author": "DuckyPham",
   "license": "MIT",
   "scripts": {
     "clean": "shx rm -rf bin",
-    "setup": "npm install --quiet --no-progress",
-    "prebuild:tests": "npm run clean && npm run tslint",
+    "setup": "yarn install --silent",
+    "prebuild:tests": "yarn run clean && yarn run tslint",
     "build:tests": "tsc",
-    "test": "npm run build:tests && npm run test:setup && npm run test:fast",
-    "test:android": "npm run build:tests && npm run test:setup:android && npm run test:fast:android",
-    "test:ios": "npm run build:tests && npm run test:setup:ios && npm run test:fast:ios",
+    "test": "yarn run build:tests && yarn run test:setup && yarn run test:fast",
+    "test:android": "yarn run build:tests && yarn run test:setup:android && yarn run test:fast:android",
+    "test:ios": "yarn run build:tests && yarn run test:setup:ios && yarn run test:fast:ios",
     "test:setup": "mocha --recursive bin/test --android --ios --setup",
     "test:setup:android": "mocha --recursive bin/test --android --setup",
     "test:setup:ios": "mocha --recursive bin/test --ios --setup",
@@ -32,9 +33,10 @@
     "test:debugger:ios": "mocha --recursive --inspect-brk=0.0.0.0 bin/test --ios",
     "tslint": "tslint -c tslint.json test/**/*.ts"
   },
+  "packageManager": "yarn@1.22.22",
   "repository": {
     "type": "git",
-    "url": "https://github.com/outblock/react-native-code-push"
+    "url": "https://github.com/ducky0203/react-native-code-push"
   },
   "dependencies": {
     "code-push": "4.2.3",
@@ -44,6 +46,10 @@
     "plist": "^3.0.4",
     "semver": "^7.3.5",
     "xcode": "3.0.1"
+  },
+  "peerDependencies": {
+    "react": ">=19.2.3",
+    "react-native": ">=0.85.3"
   },
   "devDependencies": {
     "@types/assert": "^1.5.2",
@@ -75,8 +81,8 @@
       ]
     },
     "commands": {
-      "postlink": "node node_modules/@outblock/react-native-code-push/scripts/postlink/run",
-      "postunlink": "node node_modules/@outblock/react-native-code-push/scripts/postunlink/run"
+      "postlink": "node node_modules/@ducky0203/react-native-code-push/scripts/postlink/run",
+      "postunlink": "node node_modules/@ducky0203/react-native-code-push/scripts/postunlink/run"
     }
   }
 }

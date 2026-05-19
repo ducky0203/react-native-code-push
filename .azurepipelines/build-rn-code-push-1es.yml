@@ -45,8 +45,8 @@ extends:
           displayName: 'Install Node.js'
 
         - script: |
-            npm pack
-            npm install -g react-native-code-push*.tgz
+            yarn pack --filename react-native-code-push.tgz
+            yarn global add ./react-native-code-push.tgz
           displayName: 'Package react-native-code-push'
           workingDirectory: $(Build.SourcesDirectory)
 

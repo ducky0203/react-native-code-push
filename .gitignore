@@ -1,6 +1,10 @@
 node_modules/
 *.log
 .DS_Store
+
+# This project uses Yarn as the package manager — yarn.lock is the source of
+# truth. Don't track npm's lockfile to avoid drift between the two managers.
+package-lock.json
 android-backup/
 build/
 .gradle/

@@ -79,7 +79,7 @@ class RNAndroid extends Platform.Android implements RNPlatform {
      */
     installPlatform(projectDirectory: string): Q.Promise<void> {
         const innerprojectDirectory: string = path.join(projectDirectory, TestConfig.TestAppName);
-        const gradleContent: string = slash(path.join(innerprojectDirectory, "node_modules", "@revopush/react-native-code-push", "android", "codepush.gradle"));
+        const gradleContent: string = slash(path.join(innerprojectDirectory, "node_modules", "@ducky0203/react-native-code-push", "android", "codepush.gradle"));
 
         //// Set up gradle to build CodePush with the app
         // Add CodePush to android/app/build.gradle
@@ -310,7 +310,7 @@ class RNProjectManager extends ProjectManager {
         }
         mkdirp.sync(projectDirectory);
 
-        return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.78.0 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+        return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.85.3 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
             .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
             .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
             .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))

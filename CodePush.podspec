@@ -9,7 +9,9 @@ Pod::Spec.new do |s|
   s.author         = package['author']
   s.license        = package['license']
   s.homepage       = package['homepage']
-  s.source         = { :git => 'https://github.com/revopush/react-native-code-push.git', :tag => "v#{s.version}"}
+  s.source         = { :git => 'https://github.com/ducky0203/react-native-code-push.git', :tag => "v#{s.version}"}
+  # React Native 0.85 still supports iOS 15.1+. Keep a slightly higher floor
+  # to remain consistent with the previous release.
   s.ios.deployment_target = '15.5'
   s.tvos.deployment_target = '15.5'
   s.preserve_paths = '*.js'

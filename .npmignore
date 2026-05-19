@@ -25,6 +25,12 @@ DerivedData
 #
 node_modules/
 npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Don't publish the yarn lockfile — consumers resolve deps with their own
+# package manager (npm / yarn / pnpm) against the npm registry.
+yarn.lock
 
 # Don't publish example apps
 Examples/

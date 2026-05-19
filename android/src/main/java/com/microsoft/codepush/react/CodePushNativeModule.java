@@ -161,108 +161,124 @@ public class CodePushNativeModule extends BaseJavaModule {
     private void loadBundle() {
         clearLifecycleEventListener();
 
-        // ReactNative core components are changed on new architecture.
-        if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-            try {
-                DevSupportManager devSupportManager = null;
-                    ReactHost reactHost = resolveReactHost();
-                    if (reactHost != null) {
-                        devSupportManager = reactHost.getDevSupportManager();
-                    }
-                boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+        // React Native 0.85+ deprecates the legacy bridge entirely (`ReactInstanceManager`
+        // constructor and `createReactContext` throw `UnsupportedOperationException`).
+        // Detect the available runtime at execution time instead of relying on the
+        // library build flag so the same artifact works across configurations.
+        ReactHost reactHost = null;
+        try {
+            reactHost = resolveReactHost();
+        } catch (Throwable ignored) {
+            // Older RN versions might not expose ReactHost at all – fall through.
+        }
 
-                mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
-            } catch(Exception e) {
-                // If we got error in out reflection we should clear debug cache anyway.
-                mCodePush.clearDebugCacheIfNeeded(false);
-            }
-
-            try {
-                // #1) Get the ReactHost instance, which is what includes the
-                //     logic to reload the current React context.
-                final ReactHost reactHost = resolveReactHost();
-                if (reactHost == null) {
-                    return;
-                }
-
-                String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
-
-                // #2) Update the locally stored JS bundle file path
-                setJSBundle(getReactHostDelegate((ReactHostImpl) reactHost), latestJSBundleFile);
-
-                // #3) Get the context creation method
-                try {
-                    reactHost.reload("CodePush triggers reload");
-                    mCodePush.initializeUpdateAfterRestart();
-                } catch (Exception e) {
-                    // The recreation method threw an unknown exception
-                    // so just simply fallback to restarting the Activity (if it exists)
-                    loadBundleLegacy();
-                }
-
-            } catch (Exception e) {
-                // Our reflection logic failed somewhere
-                // so fall back to restarting the Activity (if it exists)
-                CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
-                loadBundleLegacy();
-            }
-
+        if (reactHost != null) {
+            loadBundleWithReactHost(reactHost);
         } else {
+            loadBundleWithInstanceManager();
+        }
+    }
 
+    private void loadBundleWithReactHost(final ReactHost reactHost) {
+        try {
+            DevSupportManager devSupportManager = null;
             try {
-                DevSupportManager devSupportManager = null;
-                ReactInstanceManager reactInstanceManager = resolveInstanceManager();
-                if (reactInstanceManager != null) {
-                    devSupportManager = reactInstanceManager.getDevSupportManager();
-                }
-                boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+                devSupportManager = reactHost.getDevSupportManager();
+            } catch (Throwable ignored) {
+                // DevSupportManager is optional; ignore if unavailable.
+            }
+            boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+            mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
+        } catch (Exception e) {
+            // If we got error in out reflection we should clear debug cache anyway.
+            mCodePush.clearDebugCacheIfNeeded(false);
+        }
 
-                mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
-            } catch(Exception e) {
-                // If we got error in out reflection we should clear debug cache anyway.
-                mCodePush.clearDebugCacheIfNeeded(false);
+        try {
+            String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
+
+            // Update the locally stored JS bundle file path on the underlying
+            // ReactHostDelegate (only possible when the bridgeless `ReactHostImpl`
+            // is the concrete implementation – which is the standard one in core RN).
+            if (reactHost instanceof ReactHostImpl) {
+                ReactHostDelegate delegate = getReactHostDelegate((ReactHostImpl) reactHost);
+                if (delegate != null) {
+                    setJSBundle(delegate, latestJSBundleFile);
+                }
             }
 
             try {
-                // #1) Get the ReactInstanceManager instance, which is what includes the
-                //     logic to reload the current React context.
-                final ReactInstanceManager instanceManager = resolveInstanceManager();
-                if (instanceManager == null) {
-                    return;
-                }
-
-                String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
-
-                // #2) Update the locally stored JS bundle file path
-                setJSBundle(instanceManager, latestJSBundleFile);
-
-                // #3) Get the context creation method and fire it on the UI thread (which RN enforces)
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // We don't need to resetReactRootViews anymore
-                            // due the issue https://github.com/facebook/react-native/issues/14533
-                            // has been fixed in RN 0.46.0
-                            //resetReactRootViews(instanceManager);
-
-                            instanceManager.recreateReactContextInBackground();
-                            mCodePush.initializeUpdateAfterRestart();
-                        } catch (Exception e) {
-                            // The recreation method threw an unknown exception
-                            // so just simply fallback to restarting the Activity (if it exists)
-                            loadBundleLegacy();
-                        }
-                    }
-                });
-
+                reactHost.reload("CodePush triggers reload");
+                mCodePush.initializeUpdateAfterRestart();
             } catch (Exception e) {
-                // Our reflection logic failed somewhere
-                // so fall back to restarting the Activity (if it exists)
-                CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
+                // The reload method threw an unknown exception
+                // so just simply fallback to restarting the Activity (if it exists)
                 loadBundleLegacy();
             }
+        } catch (Exception e) {
+            // Our reflection logic failed somewhere
+            // so fall back to restarting the Activity (if it exists)
+            CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
+            loadBundleLegacy();
+        }
+    }
 
+    private void loadBundleWithInstanceManager() {
+        ReactInstanceManager instanceManager;
+        try {
+            instanceManager = resolveInstanceManager();
+        } catch (Throwable e) {
+            // The legacy bridge classes were removed (RN 0.85+). Nothing else we can do
+            // but recreate the Activity so the host re-reads the bundle URL.
+            CodePushUtils.log("Legacy ReactInstanceManager unavailable – restarting Activity. " + e.getMessage());
+            loadBundleLegacy();
+            return;
+        }
+        if (instanceManager == null) {
+            return;
+        }
+
+        try {
+            DevSupportManager devSupportManager = null;
+            try {
+                devSupportManager = instanceManager.getDevSupportManager();
+            } catch (Throwable ignored) {
+                // Some RN versions stub this method – treat as unavailable.
+            }
+            boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+            mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
+        } catch (Exception e) {
+            // If we got error in out reflection we should clear debug cache anyway.
+            mCodePush.clearDebugCacheIfNeeded(false);
+        }
+
+        try {
+            final ReactInstanceManager finalInstanceManager = instanceManager;
+            String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
+
+            // Update the locally stored JS bundle file path
+            setJSBundle(finalInstanceManager, latestJSBundleFile);
+
+            // Fire the context creation on the UI thread (which RN enforces)
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        finalInstanceManager.recreateReactContextInBackground();
+                        mCodePush.initializeUpdateAfterRestart();
+                    } catch (Throwable e) {
+                        // In RN 0.85+ `recreateReactContextInBackground` is a no-op /
+                        // throws `UnsupportedOperationException`. Fall back to restarting
+                        // the Activity, which causes the host to reload the new bundle.
+                        loadBundleLegacy();
+                    }
+                }
+            });
+        } catch (Throwable e) {
+            // Our reflection logic failed somewhere
+            // so fall back to restarting the Activity (if it exists)
+            CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
+            loadBundleLegacy();
         }
     }
 
@@ -307,7 +323,7 @@ public class CodePushNativeModule extends BaseJavaModule {
     }
 
     // Use reflection to find the ReactInstanceManager. See #556 for a proposal for a less brittle way to approach this.
-    private ReactInstanceManager resolveInstanceManager() throws NoSuchFieldException, IllegalAccessException {
+    private ReactInstanceManager resolveInstanceManager() {
         ReactInstanceManager instanceManager = CodePush.getReactInstanceManager();
         if (instanceManager != null) {
             return instanceManager;
@@ -318,13 +334,17 @@ public class CodePushNativeModule extends BaseJavaModule {
             return null;
         }
 
-        ReactApplication reactApplication = (ReactApplication) currentActivity.getApplication();
-        instanceManager = reactApplication.getReactNativeHost().getReactInstanceManager();
-
-        return instanceManager;
+        try {
+            ReactApplication reactApplication = (ReactApplication) currentActivity.getApplication();
+            // RN 0.85+ may throw `UnsupportedOperationException` here when the app
+            // is running in bridgeless mode.
+            return reactApplication.getReactNativeHost().getReactInstanceManager();
+        } catch (Throwable e) {
+            return null;
+        }
     }
 
-    private ReactHost resolveReactHost() throws NoSuchFieldException, IllegalAccessException {
+    private ReactHost resolveReactHost() {
         ReactHost reactHost = CodePush.getReactHost();
         if (reactHost != null) {
             return reactHost;
@@ -335,8 +355,12 @@ public class CodePushNativeModule extends BaseJavaModule {
             return null;
         }
 
-        ReactApplication reactApplication = (ReactApplication) currentActivity.getApplication();
-        return reactApplication.getReactHost();
+        try {
+            ReactApplication reactApplication = (ReactApplication) currentActivity.getApplication();
+            return reactApplication.getReactHost();
+        } catch (Throwable e) {
+            return null;
+        }
     }
 
     private void restartAppInternal(boolean onlyIfUpdateIsPending) {
