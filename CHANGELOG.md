@@ -39,8 +39,19 @@ mode by default).
 
 ### iOS
 
-- Kept `ios.deployment_target = 15.5`, which satisfies the RN 0.85 minimum
-  of iOS 15.1.
+- Lowered `ios.deployment_target` from `15.5` to **`15.1`** in `CodePush.podspec`
+  to match the React Native 0.85.3 baseline. The previous `15.5` floor caused
+  CocoaPods to fail resolution in host apps that legitimately ship with
+  `platform :ios, '15.1'`:
+  ```
+  [!] CocoaPods could not find compatible versions for pod "CodePush":
+        Specs satisfying the dependency were found, but they required a
+        higher minimum deployment target.
+  ```
+  The `tvos.deployment_target` was lowered to `15.1` as well, and the
+  `IPHONEOS_DEPLOYMENT_TARGET` build settings in
+  `ios/CodePush.xcodeproj/project.pbxproj` were aligned to `15.1` (some
+  entries were still pinned to a legacy `9.0`).
 - Source code already calls `RCTTriggerReloadCommandListeners`, so reload
   works in both bridge and bridgeless mode. The KVC fallback on `super.bridge`
   is a no-op under bridgeless because of Objective-C nil-messaging.
@@ -57,6 +68,19 @@ mode by default).
 - Removed all third-party branding from the docs, README and source files.
 - Updated keywords / description in `package.json` and added explicit
   `peerDependencies` (`react >=19.2.3`, `react-native >=0.85.3`).
+- **Dependency cleanup** to silence install-time deprecation warnings:
+  - Removed `code-push@4.2.3` (App Center sunset; never required at runtime
+    by this package — it was a leftover dev-CLI dep). This also kills the
+    transitive `superagent@8`, `superagent@5`, `formidable@1.2.6` warnings.
+  - Bumped `glob` from `^7.1.7` → `^13.0.6` (uses the back-compat
+    `glob.sync` alias added in glob 9.3+; requires Node ≥20, already the
+    minimum for RN 0.85.3).
+  - Added a yarn `resolutions` entry forcing `uuid@^11.1.0` to override the
+    deprecated `uuid@7` nested under `xcode@3.0.1` (xcode only calls
+    `uuid.v4()`, which is backward-compatible).
+- Switched the dev workflow from `npm` to **Yarn 1.x** (`yarn.lock` is the
+  source of truth; `package-lock.json` is `.gitignore`d). CI, `CONTRIBUTING.md`
+  and `package.json` scripts updated accordingly.
 
 ### Notes for consumers
 
