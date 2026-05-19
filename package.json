@@ -39,13 +39,15 @@
     "url": "https://github.com/ducky0203/react-native-code-push"
   },
   "dependencies": {
-    "code-push": "4.2.3",
-    "glob": "^7.1.7",
+    "glob": "^13.0.6",
     "hoist-non-react-statics": "^3.3.2",
     "inquirer": "^8.1.5",
     "plist": "^3.0.4",
     "semver": "^7.3.5",
     "xcode": "3.0.1"
+  },
+  "resolutions": {
+    "uuid": "^11.1.0"
   },
   "peerDependencies": {
     "react": ">=19.2.3",
